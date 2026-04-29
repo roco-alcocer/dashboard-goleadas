@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚽ Goleadas Tracker — En Vivo</title>
+    <title>? Goleadas Tracker � En Vivo</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0e1a; color: #e8eaed; min-height: 100vh; padding: 20px; }
         .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #1a1f2e; margin-bottom: 30px; }
         .header h1 { font-size: 32px; font-weight: 900; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); letter-spacing: 2px; }
         .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 5px; letter-spacing: 1px; }
+        .header .credit { color: #6b7280; font-size: 11px; margin-top: 8px; letter-spacing: 2px; }
+        .header .credit .names { color: #00ff88; font-weight: 900; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
         .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1400px; margin: 0 auto 30px; }
         .stat-card { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 8px; padding: 20px; text-align: center; }
         .stat-card .value { font-size: 32px; font-weight: 900; color: #00ff88; }
@@ -64,33 +66,34 @@
 </head>
 <body>
 <div class="header">
-    <h1>⚽ GOLEADAS TRACKER</h1>
-    <div class="subtitle">EN VIVO · ACTUALIZACIÓN AUTOMÁTICA</div>
+    <h1>? GOLEADAS TRACKER</h1>
+    <div class="subtitle">EN VIVO � ACTUALIZACI�N AUTOM�TICA</div>
+    <div class="credit">? BY <span class="names">ROCO & SANTI</span> ?</div>
 </div>
 <div class="stats">
     <div class="stat-card"><div class="value" id="stat-vivo">--</div><div class="label">En Vivo</div></div>
     <div class="stat-card alert"><div class="value" id="stat-alertas">--</div><div class="label">Alertas Activas</div></div>
     <div class="stat-card warning"><div class="value" id="stat-cerca">--</div><div class="label">Cerca de Alerta</div></div>
-    <div class="stat-card upcoming"><div class="value" id="stat-proximos">--</div><div class="label">Próximos (2h)</div></div>
+    <div class="stat-card upcoming"><div class="value" id="stat-proximos">--</div><div class="label">Pr�ximos (2h)</div></div>
     <div class="stat-card"><div class="value" id="stat-ligas">--</div><div class="label">Ligas Activas</div></div>
 </div>
 <div class="container">
     <div class="controls">
         <button class="filter-btn active" data-filter="todos">Todos</button>
-        <button class="filter-btn" data-filter="vivo">⚡ En Vivo</button>
-        <button class="filter-btn" data-filter="proximo">⏰ Próximos</button>
-        <button class="filter-btn" data-filter="alerta_activa">🔴 Alertas</button>
-        <button class="filter-btn" data-filter="cerca">🟡 Cerca</button>
+        <button class="filter-btn" data-filter="vivo">? En Vivo</button>
+        <button class="filter-btn" data-filter="proximo">? Pr�ximos</button>
+        <button class="filter-btn" data-filter="alerta_activa">?? Alertas</button>
+        <button class="filter-btn" data-filter="cerca">?? Cerca</button>
         <div class="refresh-info"><div class="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
     </div>
-    <div id="content"><div class="empty"><div class="empty-icon">⏳</div>Cargando partidos...</div></div>
+    <div id="content"><div class="empty"><div class="empty-icon">?</div>Cargando partidos...</div></div>
 </div>
 <script>
 let filtroActual = 'todos';
 let datosCache = { partidos_vivos: [], partidos_proximos: [] };
 
 function getEstadoLabel(estado) {
-    const labels = {'alerta_activa': '🚨 ALERTA ACTIVA','cerca': '⚠️ CERCA','vigilando': '👀 VIGILANDO','fuera': '⏰ FUERA DE VENTANA','proximo': '⏰ PRÓXIMO'};
+    const labels = {'alerta_activa': '?? ALERTA ACTIVA','cerca': '?? CERCA','vigilando': '?? VIGILANDO','fuera': '? FUERA DE VENTANA','proximo': '? PR�XIMO'};
     return labels[estado] || estado;
 }
 
@@ -106,7 +109,7 @@ function renderPartidoVivo(p) {
     return `
         <div class="match ${p.estado}">
             <div class="match-header">
-                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} · ${p.pais}</div>
+                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} � ${p.pais}</div>
                 <div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div>
             </div>
             <div class="match-body">
@@ -123,7 +126,7 @@ function renderPartidoProximo(p) {
     return `
         <div class="match proximo">
             <div class="match-header">
-                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} · ${p.pais}</div>
+                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} � ${p.pais}</div>
                 <div class="minuto-badge proximo">${p.hora_inicio}</div>
             </div>
             <div class="match-body">
@@ -131,7 +134,7 @@ function renderPartidoProximo(p) {
                 <div class="vs">VS</div>
                 <div class="team">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${p.equipo_visitante}</div></div>
             </div>
-            <div style="text-align: center;"><span class="status-tag status-proximo">⏰ Empieza ${tiempoTexto}</span></div>
+            <div style="text-align: center;"><span class="status-tag status-proximo">? Empieza ${tiempoTexto}</span></div>
         </div>`;
 }
 
@@ -139,7 +142,6 @@ function render() {
     const container = document.getElementById('content');
     let html = '';
     
-    // Filtrar partidos en vivo según filtro
     let vivos = datosCache.partidos_vivos;
     let proximos = datosCache.partidos_proximos;
     
@@ -150,20 +152,18 @@ function render() {
         proximos = [];
     }
     
-    // Sección En Vivo
     if (vivos.length > 0) {
-        html += `<div class="section-header live">⚡ EN VIVO <span class="count">${vivos.length}</span></div>`;
+        html += `<div class="section-header live">? EN VIVO <span class="count">${vivos.length}</span></div>`;
         html += `<div class="matches">${vivos.map(renderPartidoVivo).join('')}</div>`;
     }
     
-    // Sección Próximos
     if (proximos.length > 0) {
-        html += `<div class="section-header upcoming">⏰ PRÓXIMOS (Siguientes 2 horas) <span class="count">${proximos.length}</span></div>`;
+        html += `<div class="section-header upcoming">? PR�XIMOS (Siguientes 2 horas) <span class="count">${proximos.length}</span></div>`;
         html += `<div class="matches">${proximos.map(renderPartidoProximo).join('')}</div>`;
     }
     
     if (vivos.length === 0 && proximos.length === 0) {
-        html = `<div class="empty"><div class="empty-icon">⚽</div>No hay partidos en este momento</div>`;
+        html = `<div class="empty"><div class="empty-icon">?</div>No hay partidos en este momento</div>`;
     }
     
     container.innerHTML = html;
