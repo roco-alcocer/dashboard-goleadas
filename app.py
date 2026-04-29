@@ -1,25 +1,25 @@
 """
-Dashboard Goleadas Tracker
+Dashboard Goleadas Tracker - V2 con próximos partidos
 """
 
 import os
 import requests
 from flask import Flask, render_template, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
-URL_API = "https://v3.football.api-sports.io/fixtures"
+URL_API_LIVE = "https://v3.football.api-sports.io/fixtures"
 
 
-def obtener_partidos_en_vivo():
+def consulta_api(parametros):
+    """Función genérica para consultar la API"""
     if not API_FOOTBALL_KEY:
         return []
     headers = {"x-apisports-key": API_FOOTBALL_KEY}
-    parametros = {"live": "all"}
     try:
-        respuesta = requests.get(URL_API, headers=headers, params=parametros, timeout=15)
+        respuesta = requests.get(URL_API_LIVE, headers=headers, params=parametros, timeout=15)
         if respuesta.status_code == 200:
             return respuesta.json().get("response", [])
         return []
@@ -28,7 +28,35 @@ def obtener_partidos_en_vivo():
         return []
 
 
+def obtener_partidos_en_vivo():
+    """Partidos jugándose AHORA"""
+    return consulta_api({"live": "all"})
+
+
+def obtener_proximos_partidos():
+    """Partidos que empiezan en las próximas 2 horas"""
+    hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    todos = consulta_api({"date": hoy, "status": "NS"})
+    
+    # Filtrar solo los que empiezan en las próximas 2 horas
+    ahora = datetime.now(timezone.utc)
+    en_dos_horas = ahora + timedelta(hours=2)
+    proximos = []
+    
+    for p in todos:
+        try:
+            fecha_str = p["fixture"]["date"]
+            fecha = datetime.fromisoformat(fecha_str.replace("Z", "+00:00"))
+            if ahora <= fecha <= en_dos_horas:
+                proximos.append(p)
+        except Exception:
+            continue
+    
+    return proximos
+
+
 def clasificar_estado(minuto, gol_local, gol_visitante):
+    """Clasifica el estado de un partido en vivo"""
     if minuto is None:
         return "fuera"
     diferencia = abs(gol_local - gol_visitante)
@@ -48,6 +76,60 @@ def clasificar_estado(minuto, gol_local, gol_visitante):
     return "fuera"
 
 
+def parsear_partido_vivo(p):
+    """Convierte partido de la API a formato del dashboard"""
+    minuto = p["fixture"]["status"]["elapsed"]
+    gol_local = p["goals"]["home"] or 0
+    gol_visitante = p["goals"]["away"] or 0
+    estado = clasificar_estado(minuto, gol_local, gol_visitante)
+    return {
+        "id": p["fixture"]["id"],
+        "tipo": "vivo",
+        "minuto": minuto if minuto else 0,
+        "estado_partido": p["fixture"]["status"]["short"],
+        "equipo_local": p["teams"]["home"]["name"],
+        "logo_local": p["teams"]["home"]["logo"],
+        "equipo_visitante": p["teams"]["away"]["name"],
+        "logo_visitante": p["teams"]["away"]["logo"],
+        "gol_local": gol_local,
+        "gol_visitante": gol_visitante,
+        "liga": p["league"]["name"],
+        "logo_liga": p["league"]["logo"],
+        "pais": p["league"]["country"],
+        "bandera": p["league"]["flag"],
+        "estado": estado
+    }
+
+
+def parsear_partido_proximo(p):
+    """Convierte partido próximo al formato del dashboard"""
+    fecha_str = p["fixture"]["date"]
+    fecha_utc = datetime.fromisoformat(fecha_str.replace("Z", "+00:00"))
+    # Convertir a hora de México (UTC-6)
+    fecha_mx = fecha_utc - timedelta(hours=6)
+    hora_inicio = fecha_mx.strftime("%H:%M")
+    
+    # Calcular minutos hasta que empiece
+    ahora = datetime.now(timezone.utc)
+    minutos_falta = int((fecha_utc - ahora).total_seconds() / 60)
+    
+    return {
+        "id": p["fixture"]["id"],
+        "tipo": "proximo",
+        "hora_inicio": hora_inicio,
+        "minutos_falta": minutos_falta,
+        "equipo_local": p["teams"]["home"]["name"],
+        "logo_local": p["teams"]["home"]["logo"],
+        "equipo_visitante": p["teams"]["away"]["name"],
+        "logo_visitante": p["teams"]["away"]["logo"],
+        "liga": p["league"]["name"],
+        "logo_liga": p["league"]["logo"],
+        "pais": p["league"]["country"],
+        "bandera": p["league"]["flag"],
+        "estado": "proximo"
+    }
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -55,46 +137,48 @@ def home():
 
 @app.route("/api/partidos")
 def api_partidos():
-    partidos_raw = obtener_partidos_en_vivo()
-    partidos = []
+    # Partidos en vivo
+    vivos_raw = obtener_partidos_en_vivo()
+    partidos_vivos = []
     ligas_set = set()
     alertas_count = 0
     cerca_count = 0
-    for p in partidos_raw:
+    
+    for p in vivos_raw:
         try:
-            minuto = p["fixture"]["status"]["elapsed"]
-            gol_local = p["goals"]["home"] or 0
-            gol_visitante = p["goals"]["away"] or 0
-            estado = clasificar_estado(minuto, gol_local, gol_visitante)
-            if estado == "alerta_activa":
+            partido = parsear_partido_vivo(p)
+            if partido["estado"] == "alerta_activa":
                 alertas_count += 1
-            elif estado == "cerca":
+            elif partido["estado"] == "cerca":
                 cerca_count += 1
-            ligas_set.add(p["league"]["name"])
-            partidos.append({
-                "id": p["fixture"]["id"],
-                "minuto": minuto if minuto else 0,
-                "estado_partido": p["fixture"]["status"]["short"],
-                "equipo_local": p["teams"]["home"]["name"],
-                "logo_local": p["teams"]["home"]["logo"],
-                "equipo_visitante": p["teams"]["away"]["name"],
-                "logo_visitante": p["teams"]["away"]["logo"],
-                "gol_local": gol_local,
-                "gol_visitante": gol_visitante,
-                "liga": p["league"]["name"],
-                "logo_liga": p["league"]["logo"],
-                "pais": p["league"]["country"],
-                "bandera": p["league"]["flag"],
-                "estado": estado
-            })
-        except Exception as e:
+            ligas_set.add(partido["liga"])
+            partidos_vivos.append(partido)
+        except Exception:
             continue
+    
+    # Próximos partidos (siguientes 2 horas)
+    proximos_raw = obtener_proximos_partidos()
+    partidos_proximos = []
+    
+    for p in proximos_raw:
+        try:
+            partido = parsear_partido_proximo(p)
+            ligas_set.add(partido["liga"])
+            partidos_proximos.append(partido)
+        except Exception:
+            continue
+    
+    # Ordenar
     orden = {"alerta_activa": 0, "cerca": 1, "vigilando": 2, "fuera": 3}
-    partidos.sort(key=lambda x: (orden.get(x["estado"], 4), -x["minuto"]))
+    partidos_vivos.sort(key=lambda x: (orden.get(x["estado"], 4), -x["minuto"]))
+    partidos_proximos.sort(key=lambda x: x["minutos_falta"])
+    
     return jsonify({
-        "partidos": partidos,
+        "partidos_vivos": partidos_vivos,
+        "partidos_proximos": partidos_proximos,
         "stats": {
-            "total": len(partidos),
+            "total_vivo": len(partidos_vivos),
+            "total_proximos": len(partidos_proximos),
             "alertas": alertas_count,
             "cerca": cerca_count,
             "ligas": len(ligas_set),

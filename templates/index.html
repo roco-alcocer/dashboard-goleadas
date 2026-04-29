@@ -10,19 +10,24 @@
         .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #1a1f2e; margin-bottom: 30px; }
         .header h1 { font-size: 32px; font-weight: 900; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); letter-spacing: 2px; }
         .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 5px; letter-spacing: 1px; }
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 1200px; margin: 0 auto 30px; }
+        .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1400px; margin: 0 auto 30px; }
         .stat-card { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 8px; padding: 20px; text-align: center; }
         .stat-card .value { font-size: 32px; font-weight: 900; color: #00ff88; }
         .stat-card .label { font-size: 11px; color: #6b7280; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
         .stat-card.alert .value { color: #ff3b3b; }
         .stat-card.warning .value { color: #ffb800; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-card.upcoming .value { color: #4a9eff; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .filter-btn { background: #1a1f2e; border: 1px solid #2a3145; color: #e8eaed; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
         .filter-btn:hover, .filter-btn.active { background: #00ff88; color: #0a0e1a; border-color: #00ff88; }
         .refresh-info { margin-left: auto; font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 8px; }
         .refresh-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .section-header { font-size: 14px; font-weight: 900; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 1px solid #2a3145; }
+        .section-header.live { color: #00ff88; }
+        .section-header.upcoming { color: #4a9eff; }
+        .section-header .count { background: #2a3145; color: #e8eaed; padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-left: 10px; }
         .matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 15px; }
         .match { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 10px; padding: 18px; transition: transform 0.2s, border-color 0.2s; }
         .match:hover { transform: translateY(-2px); border-color: #3a4159; }
@@ -30,6 +35,7 @@
         @keyframes redPulse { 0%, 100% { box-shadow: 0 0 20px rgba(255, 59, 59, 0.3); } 50% { box-shadow: 0 0 30px rgba(255, 59, 59, 0.6); } }
         .match.cerca { border-color: #ffb800; box-shadow: 0 0 15px rgba(255, 184, 0, 0.2); }
         .match.vigilando { border-color: #00ff88; }
+        .match.proximo { border-color: #2a3145; opacity: 0.85; }
         .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #2a3145; }
         .liga-info { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .liga-info img { width: 18px; height: 18px; border-radius: 2px; }
@@ -37,20 +43,23 @@
         .minuto-badge.alerta { background: #ff3b3b; color: white; }
         .minuto-badge.cerca { background: #ffb800; color: #0a0e1a; }
         .minuto-badge.fuera { background: #6b7280; color: white; }
+        .minuto-badge.proximo { background: #4a9eff; color: white; }
         .match-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center; }
         .team { display: flex; flex-direction: column; align-items: center; text-align: center; }
         .team img { width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
         .team-name { font-size: 13px; font-weight: 700; color: #e8eaed; }
         .score { font-size: 32px; font-weight: 900; color: #ffffff; display: flex; gap: 10px; align-items: center; }
         .score-separator { color: #6b7280; }
+        .vs { font-size: 18px; font-weight: 900; color: #4a9eff; }
         .status-tag { display: inline-block; margin-top: 10px; padding: 4px 8px; font-size: 10px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .status-alerta_activa { background: #ff3b3b; color: white; }
         .status-cerca { background: #ffb800; color: #0a0e1a; }
         .status-vigilando { background: #00ff88; color: #0a0e1a; }
         .status-fuera { background: #2a3145; color: #6b7280; }
-        .empty { text-align: center; padding: 60px 20px; color: #6b7280; font-size: 14px; }
+        .status-proximo { background: #4a9eff; color: white; }
+        .empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; }
         .empty-icon { font-size: 48px; margin-bottom: 15px; }
-        @media (max-width: 600px) { .stats { grid-template-columns: repeat(2, 1fr); } .matches { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } }
+        @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } .matches { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } }
     </style>
 </head>
 <body>
@@ -59,31 +68,42 @@
     <div class="subtitle">EN VIVO · ACTUALIZACIÓN AUTOMÁTICA</div>
 </div>
 <div class="stats">
-    <div class="stat-card"><div class="value" id="stat-total">--</div><div class="label">Partidos en Vivo</div></div>
+    <div class="stat-card"><div class="value" id="stat-vivo">--</div><div class="label">En Vivo</div></div>
     <div class="stat-card alert"><div class="value" id="stat-alertas">--</div><div class="label">Alertas Activas</div></div>
     <div class="stat-card warning"><div class="value" id="stat-cerca">--</div><div class="label">Cerca de Alerta</div></div>
+    <div class="stat-card upcoming"><div class="value" id="stat-proximos">--</div><div class="label">Próximos (2h)</div></div>
     <div class="stat-card"><div class="value" id="stat-ligas">--</div><div class="label">Ligas Activas</div></div>
 </div>
 <div class="container">
     <div class="controls">
         <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="vivo">⚡ En Vivo</button>
+        <button class="filter-btn" data-filter="proximo">⏰ Próximos</button>
         <button class="filter-btn" data-filter="alerta_activa">🔴 Alertas</button>
         <button class="filter-btn" data-filter="cerca">🟡 Cerca</button>
-        <button class="filter-btn" data-filter="vigilando">🟢 Vigilando</button>
         <div class="refresh-info"><div class="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
     </div>
-    <div id="matches-container" class="matches"><div class="empty"><div class="empty-icon">⏳</div>Cargando partidos...</div></div>
+    <div id="content"><div class="empty"><div class="empty-icon">⏳</div>Cargando partidos...</div></div>
 </div>
 <script>
 let filtroActual = 'todos';
-let partidosCache = [];
-function getEstadoLabel(estado) { const labels = {'alerta_activa': '🚨 ALERTA ACTIVA','cerca': '⚠️ CERCA','vigilando': '👀 VIGILANDO','fuera': '⏰ FUERA DE VENTANA'}; return labels[estado] || estado; }
-function getMinutoClass(estado) { if (estado === 'alerta_activa') return 'alerta'; if (estado === 'cerca') return 'cerca'; if (estado === 'fuera') return 'fuera'; return ''; }
-function renderPartidos(partidos) {
-    const container = document.getElementById('matches-container');
-    const filtrados = filtroActual === 'todos' ? partidos : partidos.filter(p => p.estado === filtroActual);
-    if (filtrados.length === 0) { container.innerHTML = `<div class="empty"><div class="empty-icon">⚽</div>No hay partidos ${filtroActual !== 'todos' ? 'en este estado' : 'en vivo ahora'}</div>`; return; }
-    container.innerHTML = filtrados.map(p => `
+let datosCache = { partidos_vivos: [], partidos_proximos: [] };
+
+function getEstadoLabel(estado) {
+    const labels = {'alerta_activa': '🚨 ALERTA ACTIVA','cerca': '⚠️ CERCA','vigilando': '👀 VIGILANDO','fuera': '⏰ FUERA DE VENTANA','proximo': '⏰ PRÓXIMO'};
+    return labels[estado] || estado;
+}
+
+function getMinutoClass(estado) {
+    if (estado === 'alerta_activa') return 'alerta';
+    if (estado === 'cerca') return 'cerca';
+    if (estado === 'fuera') return 'fuera';
+    if (estado === 'proximo') return 'proximo';
+    return '';
+}
+
+function renderPartidoVivo(p) {
+    return `
         <div class="match ${p.estado}">
             <div class="match-header">
                 <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} · ${p.pais}</div>
@@ -95,29 +115,84 @@ function renderPartidos(partidos) {
                 <div class="team">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${p.equipo_visitante}</div></div>
             </div>
             <div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div>
-        </div>`).join('');
+        </div>`;
 }
+
+function renderPartidoProximo(p) {
+    const tiempoTexto = p.minutos_falta < 60 ? `en ${p.minutos_falta} min` : `en ${Math.floor(p.minutos_falta/60)}h ${p.minutos_falta%60}m`;
+    return `
+        <div class="match proximo">
+            <div class="match-header">
+                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} · ${p.pais}</div>
+                <div class="minuto-badge proximo">${p.hora_inicio}</div>
+            </div>
+            <div class="match-body">
+                <div class="team">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${p.equipo_local}</div></div>
+                <div class="vs">VS</div>
+                <div class="team">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${p.equipo_visitante}</div></div>
+            </div>
+            <div style="text-align: center;"><span class="status-tag status-proximo">⏰ Empieza ${tiempoTexto}</span></div>
+        </div>`;
+}
+
+function render() {
+    const container = document.getElementById('content');
+    let html = '';
+    
+    // Filtrar partidos en vivo según filtro
+    let vivos = datosCache.partidos_vivos;
+    let proximos = datosCache.partidos_proximos;
+    
+    if (filtroActual === 'vivo') proximos = [];
+    else if (filtroActual === 'proximo') vivos = [];
+    else if (filtroActual === 'alerta_activa' || filtroActual === 'cerca') {
+        vivos = vivos.filter(p => p.estado === filtroActual);
+        proximos = [];
+    }
+    
+    // Sección En Vivo
+    if (vivos.length > 0) {
+        html += `<div class="section-header live">⚡ EN VIVO <span class="count">${vivos.length}</span></div>`;
+        html += `<div class="matches">${vivos.map(renderPartidoVivo).join('')}</div>`;
+    }
+    
+    // Sección Próximos
+    if (proximos.length > 0) {
+        html += `<div class="section-header upcoming">⏰ PRÓXIMOS (Siguientes 2 horas) <span class="count">${proximos.length}</span></div>`;
+        html += `<div class="matches">${proximos.map(renderPartidoProximo).join('')}</div>`;
+    }
+    
+    if (vivos.length === 0 && proximos.length === 0) {
+        html = `<div class="empty"><div class="empty-icon">⚽</div>No hay partidos en este momento</div>`;
+    }
+    
+    container.innerHTML = html;
+}
+
 async function actualizar() {
     try {
         const res = await fetch('/api/partidos');
         const data = await res.json();
-        partidosCache = data.partidos;
-        document.getElementById('stat-total').textContent = data.stats.total;
+        datosCache = data;
+        document.getElementById('stat-vivo').textContent = data.stats.total_vivo;
         document.getElementById('stat-alertas').textContent = data.stats.alertas;
         document.getElementById('stat-cerca').textContent = data.stats.cerca;
+        document.getElementById('stat-proximos').textContent = data.stats.total_proximos;
         document.getElementById('stat-ligas').textContent = data.stats.ligas;
         document.getElementById('last-update').textContent = data.stats.actualizado;
-        renderPartidos(partidosCache);
+        render();
     } catch (e) { console.error('Error:', e); }
 }
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         filtroActual = btn.dataset.filter;
-        renderPartidos(partidosCache);
+        render();
     });
 });
+
 actualizar();
 setInterval(actualizar, 30000);
 </script>
