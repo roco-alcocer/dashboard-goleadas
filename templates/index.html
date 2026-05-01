@@ -1,4 +1,3 @@
-﻿
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,6 +12,15 @@
         .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 5px; letter-spacing: 1px; }
         .header .credit { color: #6b7280; font-size: 11px; margin-top: 8px; letter-spacing: 2px; }
         .header .credit .names { color: #00ff88; font-weight: 900; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+        .alert-banner { display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #ff3b3b, #ff6b3b); color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: 900; z-index: 1000; box-shadow: 0 4px 20px rgba(255, 59, 59, 0.5); animation: slideDown 0.5s ease-out, redPulseBanner 1s infinite; }
+        .alert-banner.show { display: block; }
+        .alert-banner .close-banner { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px; font-weight: 900; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes redPulseBanner { 0%, 100% { box-shadow: 0 4px 20px rgba(255, 59, 59, 0.5); } 50% { box-shadow: 0 4px 30px rgba(255, 59, 59, 0.9); } }
+        .controls-top { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .toggle-btn { background: #1a1f2e; border: 1px solid #2a3145; color: #e8eaed; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .toggle-btn.active { background: #00ff88; color: #0a0e1a; border-color: #00ff88; }
+        .toggle-btn:hover { border-color: #00ff88; }
         .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1400px; margin: 0 auto 30px; }
         .stat-card { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 8px; padding: 20px; text-align: center; }
         .stat-card .value { font-size: 32px; font-weight: 900; color: #00ff88; }
@@ -48,9 +56,13 @@
         .minuto-badge.fuera { background: #6b7280; color: white; }
         .minuto-badge.proximo { background: #4a9eff; color: white; }
         .match-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center; }
-        .team { display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .team img { width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; }
-        .team-name { font-size: 13px; font-weight: 700; color: #e8eaed; }
+        .team { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s; }
+        .team:hover { background: rgba(0, 255, 136, 0.1); transform: scale(1.05); }
+        .team:hover .team-name { color: #00ff88; }
+        .team img { width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; pointer-events: none; }
+        .team-name { font-size: 13px; font-weight: 700; color: #e8eaed; transition: color 0.2s; pointer-events: none; }
+        .copy-hint { font-size: 9px; color: #6b7280; margin-top: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .team:hover .copy-hint { opacity: 1; }
         .score { font-size: 32px; font-weight: 900; color: #ffffff; display: flex; gap: 10px; align-items: center; }
         .score-separator { color: #6b7280; }
         .vs { font-size: 18px; font-weight: 900; color: #4a9eff; }
@@ -61,16 +73,30 @@
         .status-fuera { background: #2a3145; color: #6b7280; }
         .status-proximo { background: #4a9eff; color: white; }
         .empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; }
-        .empty-icon { font-size: 48px; margin-bottom: 15px; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #00ff88; color: #0a0e1a; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4); transition: transform 0.3s; z-index: 999; pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
         @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } .matches { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } }
     </style>
 </head>
 <body>
+
+<div id="alert-banner" class="alert-banner">
+    <span id="alert-banner-text">ALERTA</span>
+    <button class="close-banner" onclick="cerrarBanner()">X</button>
+</div>
+
 <div class="header">
     <h1>GOLEADAS TRACKER</h1>
     <div class="subtitle">EN VIVO - ACTUALIZACION AUTOMATICA</div>
     <div class="credit">BY <span class="names">ROCO &amp; SANTI</span></div>
 </div>
+
+<div class="controls-top">
+    <button id="toggle-sound" class="toggle-btn active" onclick="toggleSound()">Sonido: ON</button>
+    <button id="toggle-push" class="toggle-btn" onclick="togglePush()">Push: OFF</button>
+    <button id="test-alert" class="toggle-btn" onclick="probarAlerta()">Probar Alerta</button>
+</div>
+
 <div class="stats">
     <div class="stat-card"><div class="value" id="stat-vivo">--</div><div class="label">En Vivo</div></div>
     <div class="stat-card alert"><div class="value" id="stat-alertas">--</div><div class="label">Alertas Activas</div></div>
@@ -78,6 +104,7 @@
     <div class="stat-card upcoming"><div class="value" id="stat-proximos">--</div><div class="label">Proximos (2h)</div></div>
     <div class="stat-card"><div class="value" id="stat-ligas">--</div><div class="label">Ligas Activas</div></div>
 </div>
+
 <div class="container">
     <div class="controls">
         <button class="filter-btn active" data-filter="todos">Todos</button>
@@ -89,9 +116,121 @@
     </div>
     <div id="content"><div class="empty">Cargando partidos...</div></div>
 </div>
+
+<div id="toast" class="toast">Copiado</div>
+
 <script>
 let filtroActual = 'todos';
 let datosCache = { partidos_vivos: [], partidos_proximos: [] };
+let alertasYaNotificadas = new Set();
+let primeraCarga = true;
+
+let sonidoActivo = localStorage.getItem('sonido') !== 'false';
+let pushActivo = localStorage.getItem('push') === 'true';
+
+function reproducirCampana() {
+    if (!sonidoActivo) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ahora = ctx.currentTime;
+        for (let i = 0; i < 2; i++) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            const startTime = ahora + (i * 0.4);
+            osc.frequency.setValueAtTime(i === 0 ? 880 : 660, startTime);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.8);
+            osc.start(startTime);
+            osc.stop(startTime + 0.8);
+        }
+    } catch (e) { console.log('No se pudo reproducir sonido:', e); }
+}
+
+function mostrarBanner(texto) {
+    const banner = document.getElementById('alert-banner');
+    const bannerText = document.getElementById('alert-banner-text');
+    bannerText.textContent = texto;
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 30000);
+}
+
+function cerrarBanner() {
+    document.getElementById('alert-banner').classList.remove('show');
+}
+
+function enviarPushNotification(titulo, texto) {
+    if (!pushActivo) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+        new Notification(titulo, { body: texto, tag: 'goleada-alert', requireInteraction: true });
+    }
+}
+
+function dispararAlerta(partido) {
+    const idAlerta = `${partido.id}_${partido.gol_local}-${partido.gol_visitante}_${partido.minuto}`;
+    if (alertasYaNotificadas.has(idAlerta)) return;
+    alertasYaNotificadas.add(idAlerta);
+    if (primeraCarga) return;
+    const texto = `ALERTA: ${partido.equipo_local} ${partido.gol_local}-${partido.gol_visitante} ${partido.equipo_visitante} | Min ${partido.minuto} | ${partido.liga}`;
+    mostrarBanner(texto);
+    reproducirCampana();
+    enviarPushNotification('Goleadas Tracker', `${partido.equipo_local} ${partido.gol_local}-${partido.gol_visitante} ${partido.equipo_visitante} | Min ${partido.minuto}`);
+}
+
+function toggleSound() {
+    sonidoActivo = !sonidoActivo;
+    localStorage.setItem('sonido', sonidoActivo);
+    const btn = document.getElementById('toggle-sound');
+    btn.textContent = `Sonido: ${sonidoActivo ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('active', sonidoActivo);
+    if (sonidoActivo) reproducirCampana();
+}
+
+async function togglePush() {
+    if (!('Notification' in window)) { mostrarToast('Tu navegador no soporta notificaciones push'); return; }
+    if (Notification.permission === 'denied') { mostrarToast('Permisos bloqueados. Activalos en configuracion del navegador.'); return; }
+    if (Notification.permission !== 'granted') {
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') { mostrarToast('Permisos rechazados'); return; }
+    }
+    pushActivo = !pushActivo;
+    localStorage.setItem('push', pushActivo);
+    const btn = document.getElementById('toggle-push');
+    btn.textContent = `Push: ${pushActivo ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('active', pushActivo);
+    if (pushActivo) { new Notification('Goleadas Tracker', { body: 'Notificaciones activadas correctamente' }); }
+}
+
+function probarAlerta() {
+    const fakePartido = { id: 'test', equipo_local: 'Real Madrid', equipo_visitante: 'Barcelona', gol_local: 4, gol_visitante: 0, minuto: 22, liga: 'La Liga' };
+    primeraCarga = false;
+    alertasYaNotificadas.delete(`test_4-0_22`);
+    dispararAlerta(fakePartido);
+}
+
+function mostrarToast(texto) {
+    const toast = document.getElementById('toast');
+    toast.textContent = texto;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function copiarEquipos(local, visitante) {
+    const texto = `${local} vs ${visitante}`;
+    navigator.clipboard.writeText(texto).then(() => { mostrarToast(`Copiado: ${texto}`); }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = texto;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        mostrarToast(`Copiado: ${texto}`);
+    });
+}
 
 function getEstadoLabel(estado) {
     const labels = {'alerta_activa': 'ALERTA ACTIVA','cerca': 'CERCA','vigilando': 'VIGILANDO','fuera': 'FUERA DE VENTANA','proximo': 'PROXIMO'};
@@ -106,37 +245,23 @@ function getMinutoClass(estado) {
     return '';
 }
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 function renderPartidoVivo(p) {
-    return `
-        <div class="match ${p.estado}">
-            <div class="match-header">
-                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} - ${p.pais}</div>
-                <div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div>
-            </div>
-            <div class="match-body">
-                <div class="team">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${p.equipo_local}</div></div>
-                <div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div>
-                <div class="team">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${p.equipo_visitante}</div></div>
-            </div>
-            <div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div>
-        </div>`;
+    const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
+    const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
+    return `<div class="match ${p.estado}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</div><div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div></div><div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div></div>`;
 }
 
 function renderPartidoProximo(p) {
     const tiempoTexto = p.minutos_falta < 60 ? `en ${p.minutos_falta} min` : `en ${Math.floor(p.minutos_falta/60)}h ${p.minutos_falta%60}m`;
-    return `
-        <div class="match proximo">
-            <div class="match-header">
-                <div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${p.liga} - ${p.pais}</div>
-                <div class="minuto-badge proximo">${p.hora_inicio}</div>
-            </div>
-            <div class="match-body">
-                <div class="team">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${p.equipo_local}</div></div>
-                <div class="vs">VS</div>
-                <div class="team">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${p.equipo_visitante}</div></div>
-            </div>
-            <div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div>
-        </div>`;
+    const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
+    const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
+    return `<div class="match proximo"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</div><div class="minuto-badge proximo">${p.hora_inicio}</div></div><div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="vs">VS</div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div></div>`;
 }
 
 function render() {
@@ -175,8 +300,25 @@ async function actualizar() {
         document.getElementById('stat-proximos').textContent = data.stats.total_proximos;
         document.getElementById('stat-ligas').textContent = data.stats.ligas;
         document.getElementById('last-update').textContent = data.stats.actualizado;
+        data.partidos_vivos.forEach(p => { if (p.estado === 'alerta_activa') dispararAlerta(p); });
+        primeraCarga = false;
         render();
     } catch (e) { console.error('Error:', e); }
+}
+
+function inicializarBotones() {
+    const btnSound = document.getElementById('toggle-sound');
+    btnSound.textContent = `Sonido: ${sonidoActivo ? 'ON' : 'OFF'}`;
+    btnSound.classList.toggle('active', sonidoActivo);
+    const btnPush = document.getElementById('toggle-push');
+    if (Notification.permission === 'granted' && pushActivo) {
+        btnPush.textContent = 'Push: ON';
+        btnPush.classList.add('active');
+    } else {
+        pushActivo = false;
+        btnPush.textContent = 'Push: OFF';
+        btnPush.classList.remove('active');
+    }
 }
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -188,6 +330,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
+inicializarBotones();
 actualizar();
 setInterval(actualizar, 30000);
 </script>
