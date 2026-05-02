@@ -6,7 +6,7 @@
     <title>Goleadas Tracker - En Vivo</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0e1a; color: #e8eaed; min-height: 100vh; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0e1a; color: #e8eaed; min-height: 100vh; padding: 20px; overscroll-behavior-y: contain; }
         .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #1a1f2e; margin-bottom: 30px; }
         .header h1 { font-size: 32px; font-weight: 900; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); letter-spacing: 2px; }
         .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 5px; letter-spacing: 1px; }
@@ -17,10 +17,16 @@
         .alert-banner .close-banner { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px; font-weight: 900; }
         @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
         @keyframes redPulseBanner { 0%, 100% { box-shadow: 0 4px 20px rgba(255, 59, 59, 0.5); } 50% { box-shadow: 0 4px 30px rgba(255, 59, 59, 0.9); } }
+        .stale-warning { display: none; position: sticky; top: 0; background: #ffb800; color: #0a0e1a; padding: 8px 16px; text-align: center; font-size: 12px; font-weight: 700; z-index: 100; border-radius: 4px; margin-bottom: 15px; }
+        .stale-warning.show { display: block; }
         .controls-top { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .toggle-btn { background: #1a1f2e; border: 1px solid #2a3145; color: #e8eaed; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
         .toggle-btn.active { background: #00ff88; color: #0a0e1a; border-color: #00ff88; }
         .toggle-btn:hover { border-color: #00ff88; }
+        .toggle-btn.refresh-btn { background: #4a9eff; color: white; border-color: #4a9eff; }
+        .toggle-btn.refresh-btn.spinning { background: #2a3145; }
+        .toggle-btn.refresh-btn.spinning::before { content: '↻ '; display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1400px; margin: 0 auto 30px; }
         .stat-card { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 8px; padding: 20px; text-align: center; }
         .stat-card .value { font-size: 32px; font-weight: 900; color: #00ff88; }
@@ -34,6 +40,7 @@
         .filter-btn:hover, .filter-btn.active { background: #00ff88; color: #0a0e1a; border-color: #00ff88; }
         .refresh-info { margin-left: auto; font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 8px; }
         .refresh-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 2s infinite; }
+        .refresh-dot.stale { background: #ffb800; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .section-header { font-size: 14px; font-weight: 900; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 1px solid #2a3145; }
         .section-header.live { color: #00ff88; }
@@ -75,6 +82,8 @@
         .empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; }
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #00ff88; color: #0a0e1a; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4); transition: transform 0.3s; z-index: 999; pointer-events: none; }
         .toast.show { transform: translateX(-50%) translateY(0); }
+        .pull-indicator { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-50px); background: #4a9eff; color: white; padding: 8px 20px; border-radius: 0 0 12px 12px; font-size: 12px; font-weight: 700; z-index: 1001; transition: transform 0.3s; }
+        .pull-indicator.show { transform: translateX(-50%) translateY(0); }
         @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } .matches { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } }
     </style>
 </head>
@@ -85,16 +94,23 @@
     <button class="close-banner" onclick="cerrarBanner()">X</button>
 </div>
 
+<div id="pull-indicator" class="pull-indicator">Soltar para actualizar</div>
+
 <div class="header">
     <h1>GOLEADAS TRACKER</h1>
     <div class="subtitle">EN VIVO - ACTUALIZACION AUTOMATICA</div>
     <div class="credit">BY <span class="names">ROCO &amp; SANTI</span></div>
 </div>
 
+<div id="stale-warning" class="stale-warning">
+    Datos no actualizados. <a href="#" onclick="actualizar(true); return false;" style="color: #0a0e1a; text-decoration: underline;">Click para refrescar</a>
+</div>
+
 <div class="controls-top">
     <button id="toggle-sound" class="toggle-btn active" onclick="toggleSound()">Sonido: ON</button>
     <button id="toggle-push" class="toggle-btn" onclick="togglePush()">Push: OFF</button>
     <button id="test-alert" class="toggle-btn" onclick="probarAlerta()">Probar Alerta</button>
+    <button id="refresh-btn" class="toggle-btn refresh-btn" onclick="actualizar(true)">Actualizar</button>
 </div>
 
 <div class="stats">
@@ -112,7 +128,7 @@
         <button class="filter-btn" data-filter="proximo">Proximos</button>
         <button class="filter-btn" data-filter="alerta_activa">Alertas</button>
         <button class="filter-btn" data-filter="cerca">Cerca</button>
-        <div class="refresh-info"><div class="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
+        <div class="refresh-info"><div class="refresh-dot" id="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
     </div>
     <div id="content"><div class="empty">Cargando partidos...</div></div>
 </div>
@@ -124,6 +140,9 @@ let filtroActual = 'todos';
 let datosCache = { partidos_vivos: [], partidos_proximos: [] };
 let alertasYaNotificadas = new Set();
 let primeraCarga = true;
+let intervalId = null;
+let ultimaActualizacionExitosa = null;
+let actualizando = false;
 
 let sonidoActivo = localStorage.getItem('sonido') !== 'false';
 let pushActivo = localStorage.getItem('push') === 'true';
@@ -152,8 +171,7 @@ function reproducirCampana() {
 
 function mostrarBanner(texto) {
     const banner = document.getElementById('alert-banner');
-    const bannerText = document.getElementById('alert-banner-text');
-    bannerText.textContent = texto;
+    document.getElementById('alert-banner-text').textContent = texto;
     banner.classList.add('show');
     setTimeout(() => banner.classList.remove('show'), 30000);
 }
@@ -289,9 +307,26 @@ function render() {
     container.innerHTML = html;
 }
 
-async function actualizar() {
+function verificarFrescura() {
+    if (!ultimaActualizacionExitosa) return;
+    const segundosTranscurridos = (Date.now() - ultimaActualizacionExitosa) / 1000;
+    const stale = segundosTranscurridos > 90;
+    document.getElementById('stale-warning').classList.toggle('show', stale);
+    document.getElementById('refresh-dot').classList.toggle('stale', stale);
+}
+
+async function actualizar(manual = false) {
+    if (actualizando) return;
+    actualizando = true;
+    
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (manual) {
+        refreshBtn.classList.add('spinning');
+        refreshBtn.textContent = 'Actualizando...';
+    }
+    
     try {
-        const res = await fetch('/api/partidos');
+        const res = await fetch('/api/partidos?_=' + Date.now(), { cache: 'no-cache' });
         const data = await res.json();
         datosCache = data;
         document.getElementById('stat-vivo').textContent = data.stats.total_vivo;
@@ -302,8 +337,21 @@ async function actualizar() {
         document.getElementById('last-update').textContent = data.stats.actualizado;
         data.partidos_vivos.forEach(p => { if (p.estado === 'alerta_activa') dispararAlerta(p); });
         primeraCarga = false;
+        ultimaActualizacionExitosa = Date.now();
+        document.getElementById('stale-warning').classList.remove('show');
+        document.getElementById('refresh-dot').classList.remove('stale');
         render();
-    } catch (e) { console.error('Error:', e); }
+        if (manual) mostrarToast('Datos actualizados');
+    } catch (e) {
+        console.error('Error:', e);
+        if (manual) mostrarToast('Error al actualizar');
+    } finally {
+        actualizando = false;
+        if (manual) {
+            refreshBtn.classList.remove('spinning');
+            refreshBtn.textContent = 'Actualizar';
+        }
+    }
 }
 
 function inicializarBotones() {
@@ -321,6 +369,62 @@ function inicializarBotones() {
     }
 }
 
+function iniciarPolling() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(() => actualizar(false), 30000);
+}
+
+// Detectar cuando la pestaña vuelve a estar activa
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        console.log('Pestaña activa - refrescando datos');
+        actualizar(false);
+        iniciarPolling();
+    } else {
+        if (intervalId) clearInterval(intervalId);
+    }
+});
+
+// Detectar cuando la ventana vuelve a tener foco
+window.addEventListener('focus', () => {
+    actualizar(false);
+    iniciarPolling();
+});
+
+// Pull-to-refresh para móvil
+let touchStartY = 0;
+let pulling = false;
+let pullDistance = 0;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        touchStartY = e.touches[0].clientY;
+        pulling = true;
+    }
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    pullDistance = e.touches[0].clientY - touchStartY;
+    if (pullDistance > 80) {
+        document.getElementById('pull-indicator').classList.add('show');
+    } else {
+        document.getElementById('pull-indicator').classList.remove('show');
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+    if (pulling && pullDistance > 80) {
+        actualizar(true);
+    }
+    document.getElementById('pull-indicator').classList.remove('show');
+    pulling = false;
+    pullDistance = 0;
+});
+
+// Verificar frescura cada 10 segundos
+setInterval(verificarFrescura, 10000);
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -331,8 +435,8 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 inicializarBotones();
-actualizar();
-setInterval(actualizar, 30000);
+actualizar(true);
+iniciarPolling();
 </script>
 </body>
 </html>
