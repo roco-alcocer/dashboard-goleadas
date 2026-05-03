@@ -1,5 +1,5 @@
 """
-Tabla expandida de promedios historicos de goles por liga - V2
+Tabla expandida de promedios historicos de goles por liga - V3
 Fuente: datos publicos verificados (Sportradar, Footystats, FBref, fuentes oficiales)
 NOTA: Esto es REFERENCIA HISTORICA, NO PREDICCION del partido actual.
 
@@ -7,6 +7,8 @@ Clasificacion basada en promedio de goles por partido:
 - ALTA:  promedio >= 2.9 goles/partido
 - MEDIA: promedio entre 2.5 y 2.89
 - BAJA:  promedio < 2.5
+
+V3: Normaliza tildes y caracteres especiales para mejor matching.
 """
 
 PROMEDIOS_LIGAS = {
@@ -235,7 +237,6 @@ PROMEDIOS_LIGAS = {
     "U20 League B Women": ("alta", 3.5),
     "Reykjavik Youth Cup": ("alta", 3.5),
     "Iceland Cup": ("media", 2.9),
-    "League Cup": ("media", 2.8),
     "Reykjavik Cup": ("media", 2.9),
     "Premier League Women": ("alta", 3.4),
     "Urvalsdeild Women": ("alta", 3.4),
@@ -316,7 +317,6 @@ PROMEDIOS_LIGAS = {
     
     "Russian Premier League": ("media", 2.4),
     "Premier League - Russia": ("media", 2.4),
-    "FNL": ("media", 2.4),
     "PFL": ("media", 2.5),
     "First League": ("media", 2.5),
     "Second League": ("media", 2.5),
@@ -334,7 +334,7 @@ PROMEDIOS_LIGAS = {
     "Primeira Liga": ("media", 2.5),
     "Liga Portugal 2": ("media", 2.4),
     "Segunda Liga": ("media", 2.4),
-    "Liga 3": ("media", 2.5),
+    "Liga 3 - Portugal": ("media", 2.5),
     "Campeonato de Portugal": ("media", 2.5),
     "Taca de Portugal": ("media", 2.6),
     "Taca da Liga": ("media", 2.6),
@@ -351,7 +351,6 @@ PROMEDIOS_LIGAS = {
     "2. Liga - Austria": ("media", 2.8),
     "Regionalliga - Mitte": ("media", 2.8),
     "Regionalliga - Ost": ("media", 2.8),
-    "Regionalliga - West": ("media", 2.8),
     "OFB Cup": ("media", 2.8),
     "Frauen Bundesliga - Austria": ("alta", 3.4),
     
@@ -467,11 +466,9 @@ PROMEDIOS_LIGAS = {
     "USL League Two": ("alta", 3.0),
     "US Open Cup": ("alta", 3.0),
     "MLS Cup Playoffs": ("alta", 3.0),
-    "Leagues Cup": ("alta", 3.0),
     "NWSL Women": ("alta", 2.9),
     "NWSL": ("alta", 2.9),
     "NWSL Challenge Cup": ("alta", 2.9),
-    "Super League": ("alta", 3.0),
     "USL Super League": ("alta", 3.0),
     "NCAA": ("alta", 3.5),
     "NCAA Division I": ("alta", 3.0),
@@ -598,7 +595,7 @@ PROMEDIOS_LIGAS = {
     "Northern League": ("media", 2.8),
     
     # ============================================================
-    # === LIGAS PEQUEÑAS DE EUROPA ===
+    # === LIGAS PEQUENAS DE EUROPA ===
     # ============================================================
     "Campionato": ("baja", 2.4),
     "Campionato Sammarinese": ("baja", 2.4),
@@ -607,7 +604,6 @@ PROMEDIOS_LIGAS = {
     "Premier League - Gibraltar": ("baja", 2.4),
     "Premier League - Faroe Islands": ("media", 2.6),
     "1. Deild - Faroe Islands": ("media", 2.7),
-    "Coppa Italia - San Marino": ("baja", 2.4),
     
     "Cypriot First Division": ("media", 2.6),
     "Cyprus Cup": ("media", 2.6),
@@ -679,6 +675,25 @@ PROMEDIOS_LIGAS = {
 }
 
 
+def _normalizar(texto):
+    """Quita tildes, signos especiales y pasa a minusculas para comparar"""
+    if not texto:
+        return ""
+    texto = texto.lower().strip()
+    reemplazos = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'ñ': 'n', 'ü': 'u', 'à': 'a', 'è': 'e', 'ì': 'i',
+        'ò': 'o', 'ù': 'u', 'â': 'a', 'ê': 'e', 'î': 'i',
+        'ô': 'o', 'û': 'u', 'ä': 'a', 'ë': 'e', 'ï': 'i',
+        'ö': 'o', 'ã': 'a', 'õ': 'o', 'ç': 'c',
+        'å': 'a', 'ø': 'o', 'æ': 'ae',
+        '–': '-', '—': '-', '\u2013': '-', '\u2014': '-',
+    }
+    for original, reemplazo in reemplazos.items():
+        texto = texto.replace(original, reemplazo)
+    return texto
+
+
 def obtener_indicador_liga(nombre_liga):
     """
     Devuelve el indicador de probabilidad histórica para una liga.
@@ -687,19 +702,24 @@ def obtener_indicador_liga(nombre_liga):
     if not nombre_liga:
         return {"nivel": "nd", "promedio": None, "label": "N/D"}
     
-    # Buscar coincidencia exacta primero
-    if nombre_liga in PROMEDIOS_LIGAS:
-        nivel, promedio = PROMEDIOS_LIGAS[nombre_liga]
-        return {"nivel": nivel, "promedio": promedio, "label": _label(nivel)}
+    # Normalizar el nombre buscado
+    nombre_norm = _normalizar(nombre_liga)
     
-    # Buscar coincidencia parcial (case insensitive)
-    nombre_lower = nombre_liga.lower()
+    # Buscar coincidencia exacta primero (con normalizacion)
     for liga_key, valor in PROMEDIOS_LIGAS.items():
-        if liga_key.lower() in nombre_lower or nombre_lower in liga_key.lower():
+        if _normalizar(liga_key) == nombre_norm:
+            nivel, promedio = valor
+            return {"nivel": nivel, "promedio": promedio, "label": _label(nivel)}
+    
+    # Buscar coincidencia parcial (case insensitive y sin tildes)
+    for liga_key, valor in PROMEDIOS_LIGAS.items():
+        liga_norm = _normalizar(liga_key)
+        if liga_norm in nombre_norm or nombre_norm in liga_norm:
             nivel, promedio = valor
             return {"nivel": nivel, "promedio": promedio, "label": _label(nivel)}
     
     # Inferir por palabras clave si no hay match directo
+    nombre_lower = nombre_norm
     if any(x in nombre_lower for x in ["women", "femenil", "femenin", "frauen", "damen", "kvinner", "naisten", "feminine", "feminina"]):
         return {"nivel": "alta", "promedio": 3.0, "label": "ALTA HIST."}
     if any(x in nombre_lower for x in ["u17", "u18", "u19", "u20", "u21", "u23", "youth", "junior", "sub-", "primavera"]):
