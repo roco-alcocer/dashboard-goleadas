@@ -7,17 +7,19 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0e1a; color: #e8eaed; min-height: 100vh; padding: 20px; overscroll-behavior-y: contain; }
-        .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #1a1f2e; margin-bottom: 30px; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #1a1f2e; margin-bottom: 20px; }
         .header h1 { font-size: 32px; font-weight: 900; color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); letter-spacing: 2px; }
         .header .subtitle { color: #6b7280; font-size: 13px; margin-top: 5px; letter-spacing: 1px; }
         .header .credit { color: #6b7280; font-size: 11px; margin-top: 8px; letter-spacing: 2px; }
         .header .credit .names { color: #00ff88; font-weight: 900; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+        .disclaimer { background: rgba(255, 184, 0, 0.1); border: 1px solid #ffb800; border-radius: 6px; padding: 10px 14px; margin: 0 auto 20px; max-width: 1400px; font-size: 11px; color: #ffb800; text-align: center; line-height: 1.5; }
+        .disclaimer strong { color: #ffd54f; }
         .alert-banner { display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #ff3b3b, #ff6b3b); color: white; padding: 20px; text-align: center; font-size: 18px; font-weight: 900; z-index: 1000; box-shadow: 0 4px 20px rgba(255, 59, 59, 0.5); animation: slideDown 0.5s ease-out, redPulseBanner 1s infinite; }
         .alert-banner.show { display: block; }
         .alert-banner .close-banner { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px; font-weight: 900; }
         @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
         @keyframes redPulseBanner { 0%, 100% { box-shadow: 0 4px 20px rgba(255, 59, 59, 0.5); } 50% { box-shadow: 0 4px 30px rgba(255, 59, 59, 0.9); } }
-        .stale-warning { display: none; position: sticky; top: 0; background: #ffb800; color: #0a0e1a; padding: 8px 16px; text-align: center; font-size: 12px; font-weight: 700; z-index: 100; border-radius: 4px; margin-bottom: 15px; }
+        .stale-warning { display: none; background: #ffb800; color: #0a0e1a; padding: 8px 16px; text-align: center; font-size: 12px; font-weight: 700; border-radius: 4px; margin: 0 auto 15px; max-width: 1400px; }
         .stale-warning.show { display: block; }
         .controls-top { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .toggle-btn { background: #1a1f2e; border: 1px solid #2a3145; color: #e8eaed; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
@@ -47,21 +49,27 @@
         .section-header.upcoming { color: #4a9eff; }
         .section-header .count { background: #2a3145; color: #e8eaed; padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-left: 10px; }
         .matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 15px; }
-        .match { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 10px; padding: 18px; transition: transform 0.2s, border-color 0.2s; }
+        .match { background: linear-gradient(135deg, #1a1f2e 0%, #0f1420 100%); border: 1px solid #2a3145; border-radius: 10px; padding: 18px; transition: transform 0.2s, border-color 0.2s; position: relative; }
         .match:hover { transform: translateY(-2px); border-color: #3a4159; }
         .match.alerta_activa { border-color: #ff3b3b; box-shadow: 0 0 20px rgba(255, 59, 59, 0.3); animation: redPulse 1.5s infinite; }
         @keyframes redPulse { 0%, 100% { box-shadow: 0 0 20px rgba(255, 59, 59, 0.3); } 50% { box-shadow: 0 0 30px rgba(255, 59, 59, 0.6); } }
         .match.cerca { border-color: #ffb800; box-shadow: 0 0 15px rgba(255, 184, 0, 0.2); }
         .match.vigilando { border-color: #00ff88; }
         .match.proximo { border-color: #2a3145; opacity: 0.85; }
-        .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #2a3145; }
-        .liga-info { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .liga-info img { width: 18px; height: 18px; border-radius: 2px; }
-        .minuto-badge { background: #00ff88; color: #0a0e1a; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 12px; }
+        .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #2a3145; gap: 8px; }
+        .liga-info { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; flex: 1; min-width: 0; }
+        .liga-info img { width: 18px; height: 18px; border-radius: 2px; flex-shrink: 0; }
+        .liga-info span.liga-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .minuto-badge { background: #00ff88; color: #0a0e1a; padding: 4px 10px; border-radius: 12px; font-weight: 900; font-size: 12px; flex-shrink: 0; }
         .minuto-badge.alerta { background: #ff3b3b; color: white; }
         .minuto-badge.cerca { background: #ffb800; color: #0a0e1a; }
         .minuto-badge.fuera { background: #6b7280; color: white; }
         .minuto-badge.proximo { background: #4a9eff; color: white; }
+        .indicador-liga { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 10px; cursor: help; }
+        .indicador-liga.alta { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
+        .indicador-liga.media { background: rgba(255, 184, 0, 0.15); color: #ffb800; border: 1px solid #ffb800; }
+        .indicador-liga.baja { background: rgba(255, 59, 59, 0.15); color: #ff6b6b; border: 1px solid #ff3b3b; }
+        .indicador-liga.nd { background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid #6b7280; }
         .match-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center; }
         .team { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s; }
         .team:hover { background: rgba(0, 255, 136, 0.1); transform: scale(1.05); }
@@ -80,10 +88,17 @@
         .status-fuera { background: #2a3145; color: #6b7280; }
         .status-proximo { background: #4a9eff; color: white; }
         .empty { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #00ff88; color: #0a0e1a; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4); transition: transform 0.3s; z-index: 999; pointer-events: none; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #00ff88; color: #0a0e1a; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4); transition: transform 0.3s; z-index: 999; pointer-events: none; max-width: 90vw; text-align: center; }
         .toast.show { transform: translateX(-50%) translateY(0); }
         .pull-indicator { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-50px); background: #4a9eff; color: white; padding: 8px 20px; border-radius: 0 0 12px 12px; font-size: 12px; font-weight: 700; z-index: 1001; transition: transform 0.3s; }
         .pull-indicator.show { transform: translateX(-50%) translateY(0); }
+        .indicador-leyenda { display: flex; gap: 12px; justify-content: center; margin: 15px 0; flex-wrap: wrap; font-size: 10px; }
+        .indicador-leyenda .item { display: flex; align-items: center; gap: 4px; color: #6b7280; }
+        .indicador-leyenda .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .indicador-leyenda .dot.alta { background: #00ff88; }
+        .indicador-leyenda .dot.media { background: #ffb800; }
+        .indicador-leyenda .dot.baja { background: #ff3b3b; }
+        .indicador-leyenda .dot.nd { background: #6b7280; }
         @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } .matches { grid-template-columns: 1fr; } .header h1 { font-size: 24px; } }
     </style>
 </head>
@@ -102,6 +117,11 @@
     <div class="credit">BY <span class="names">ROCO &amp; SANTI</span></div>
 </div>
 
+<div class="disclaimer">
+    ⚠️ El indicador de cada partido es <strong>REFERENCIA HISTORICA</strong> del promedio de goles por liga. 
+    <strong>NO predice el partido actual</strong> ni reemplaza analisis profesional. Usalo solo como contexto general.
+</div>
+
 <div id="stale-warning" class="stale-warning">
     Datos no actualizados. <a href="#" onclick="actualizar(true); return false;" style="color: #0a0e1a; text-decoration: underline;">Click para refrescar</a>
 </div>
@@ -111,6 +131,13 @@
     <button id="toggle-push" class="toggle-btn" onclick="togglePush()">Push: OFF</button>
     <button id="test-alert" class="toggle-btn" onclick="probarAlerta()">Probar Alerta</button>
     <button id="refresh-btn" class="toggle-btn refresh-btn" onclick="actualizar(true)">Actualizar</button>
+</div>
+
+<div class="indicador-leyenda">
+    <div class="item"><div class="dot alta"></div> ALTA = liga con muchos goles historicamente</div>
+    <div class="item"><div class="dot media"></div> MEDIA = promedio</div>
+    <div class="item"><div class="dot baja"></div> BAJA = liga defensiva</div>
+    <div class="item"><div class="dot nd"></div> N/D = sin datos</div>
 </div>
 
 <div class="stats">
@@ -128,6 +155,7 @@
         <button class="filter-btn" data-filter="proximo">Proximos</button>
         <button class="filter-btn" data-filter="alerta_activa">Alertas</button>
         <button class="filter-btn" data-filter="cerca">Cerca</button>
+        <button class="filter-btn" data-filter="alta">Solo ALTA</button>
         <div class="refresh-info"><div class="refresh-dot" id="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
     </div>
     <div id="content"><div class="empty">Cargando partidos...</div></div>
@@ -269,17 +297,24 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+function renderIndicador(p) {
+    const nivel = p.indicador_nivel || 'nd';
+    const label = p.indicador_label || 'N/D';
+    const promedio = p.indicador_promedio ? p.indicador_promedio.toFixed(2) + ' goles/partido' : 'sin datos';
+    return `<span class="indicador-liga ${nivel}" title="Promedio historico: ${promedio} | NO predice este partido">${label}</span>`;
+}
+
 function renderPartidoVivo(p) {
     const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
     const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
-    return `<div class="match ${p.estado}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</div><div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div></div><div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div></div>`;
+    return `<div class="match ${p.estado}" data-nivel="${p.indicador_nivel}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div></div>${renderIndicador(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div></div>`;
 }
 
 function renderPartidoProximo(p) {
     const tiempoTexto = p.minutos_falta < 60 ? `en ${p.minutos_falta} min` : `en ${Math.floor(p.minutos_falta/60)}h ${p.minutos_falta%60}m`;
     const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
     const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
-    return `<div class="match proximo"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</div><div class="minuto-badge proximo">${p.hora_inicio}</div></div><div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="vs">VS</div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div></div>`;
+    return `<div class="match proximo" data-nivel="${p.indicador_nivel}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge proximo">${p.hora_inicio}</div></div>${renderIndicador(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="vs">VS</div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div></div>`;
 }
 
 function render() {
@@ -287,12 +322,18 @@ function render() {
     let html = '';
     let vivos = datosCache.partidos_vivos;
     let proximos = datosCache.partidos_proximos;
+    
     if (filtroActual === 'vivo') proximos = [];
     else if (filtroActual === 'proximo') vivos = [];
     else if (filtroActual === 'alerta_activa' || filtroActual === 'cerca') {
         vivos = vivos.filter(p => p.estado === filtroActual);
         proximos = [];
     }
+    else if (filtroActual === 'alta') {
+        vivos = vivos.filter(p => p.indicador_nivel === 'alta');
+        proximos = proximos.filter(p => p.indicador_nivel === 'alta');
+    }
+    
     if (vivos.length > 0) {
         html += `<div class="section-header live">EN VIVO <span class="count">${vivos.length}</span></div>`;
         html += `<div class="matches">${vivos.map(renderPartidoVivo).join('')}</div>`;
@@ -374,10 +415,8 @@ function iniciarPolling() {
     intervalId = setInterval(() => actualizar(false), 30000);
 }
 
-// Detectar cuando la pestaña vuelve a estar activa
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        console.log('Pestaña activa - refrescando datos');
         actualizar(false);
         iniciarPolling();
     } else {
@@ -385,13 +424,11 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Detectar cuando la ventana vuelve a tener foco
 window.addEventListener('focus', () => {
     actualizar(false);
     iniciarPolling();
 });
 
-// Pull-to-refresh para móvil
 let touchStartY = 0;
 let pulling = false;
 let pullDistance = 0;
@@ -422,7 +459,6 @@ document.addEventListener('touchend', () => {
     pullDistance = 0;
 });
 
-// Verificar frescura cada 10 segundos
 setInterval(verificarFrescura, 10000);
 
 document.querySelectorAll('.filter-btn').forEach(btn => {

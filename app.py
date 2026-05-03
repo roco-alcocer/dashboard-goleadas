@@ -1,11 +1,14 @@
 """
-Dashboard Goleadas Tracker - V2 con próximos partidos
+Dashboard Goleadas Tracker - V3
+- Agrega indicador histórico por liga
+- Detecta condición 2-2 al min 25
 """
 
 import os
 import requests
 from flask import Flask, render_template, jsonify
 from datetime import datetime, timedelta, timezone
+from ligas_promedios import obtener_indicador_liga
 
 app = Flask(__name__)
 
@@ -14,7 +17,6 @@ URL_API_LIVE = "https://v3.football.api-sports.io/fixtures"
 
 
 def consulta_api(parametros):
-    """Función genérica para consultar la API"""
     if not API_FOOTBALL_KEY:
         return []
     headers = {"x-apisports-key": API_FOOTBALL_KEY}
@@ -29,16 +31,13 @@ def consulta_api(parametros):
 
 
 def obtener_partidos_en_vivo():
-    """Partidos jugándose AHORA"""
     return consulta_api({"live": "all"})
 
 
 def obtener_proximos_partidos():
-    """Partidos que empiezan en las próximas 2 horas"""
     hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     todos = consulta_api({"date": hoy, "status": "NS"})
     
-    # Filtrar solo los que empiezan en las próximas 2 horas
     ahora = datetime.now(timezone.utc)
     en_dos_horas = ahora + timedelta(hours=2)
     proximos = []
@@ -56,32 +55,46 @@ def obtener_proximos_partidos():
 
 
 def clasificar_estado(minuto, gol_local, gol_visitante):
-    """Clasifica el estado de un partido en vivo"""
     if minuto is None:
         return "fuera"
     diferencia = abs(gol_local - gol_visitante)
     max_goles = max(gol_local, gol_visitante)
+    
+    # Alerta 4-0 al min 25
     if minuto <= 25:
         if max_goles >= 4 and diferencia >= 4:
             return "alerta_activa"
-        if max_goles == 3 and diferencia == 3 and minuto <= 25:
+    
+    # Alerta 2-2 al min 25 (NUEVO)
+    if minuto <= 25:
+        if gol_local == 2 and gol_visitante == 2:
+            return "alerta_activa"
+    
+    # Cerca de 4-0 (3-0 entre min 16-25)
+    if minuto <= 25:
+        if max_goles == 3 and diferencia == 3 and minuto > 15:
             return "cerca"
+    
+    # Alerta 3-0 al min 15
     if minuto <= 15:
         if max_goles == 3 and diferencia == 3:
             return "alerta_activa"
         if max_goles == 2 and diferencia == 2:
             return "cerca"
+    
     if minuto <= 25:
         return "vigilando"
     return "fuera"
 
 
 def parsear_partido_vivo(p):
-    """Convierte partido de la API a formato del dashboard"""
     minuto = p["fixture"]["status"]["elapsed"]
     gol_local = p["goals"]["home"] or 0
     gol_visitante = p["goals"]["away"] or 0
     estado = clasificar_estado(minuto, gol_local, gol_visitante)
+    liga_nombre = p["league"]["name"]
+    indicador = obtener_indicador_liga(liga_nombre)
+    
     return {
         "id": p["fixture"]["id"],
         "tipo": "vivo",
@@ -93,25 +106,28 @@ def parsear_partido_vivo(p):
         "logo_visitante": p["teams"]["away"]["logo"],
         "gol_local": gol_local,
         "gol_visitante": gol_visitante,
-        "liga": p["league"]["name"],
+        "liga": liga_nombre,
         "logo_liga": p["league"]["logo"],
         "pais": p["league"]["country"],
         "bandera": p["league"]["flag"],
-        "estado": estado
+        "estado": estado,
+        "indicador_nivel": indicador["nivel"],
+        "indicador_label": indicador["label"],
+        "indicador_promedio": indicador["promedio"]
     }
 
 
 def parsear_partido_proximo(p):
-    """Convierte partido próximo al formato del dashboard"""
     fecha_str = p["fixture"]["date"]
     fecha_utc = datetime.fromisoformat(fecha_str.replace("Z", "+00:00"))
-    # Convertir a hora de México (UTC-6)
     fecha_mx = fecha_utc - timedelta(hours=6)
     hora_inicio = fecha_mx.strftime("%H:%M")
     
-    # Calcular minutos hasta que empiece
     ahora = datetime.now(timezone.utc)
     minutos_falta = int((fecha_utc - ahora).total_seconds() / 60)
+    
+    liga_nombre = p["league"]["name"]
+    indicador = obtener_indicador_liga(liga_nombre)
     
     return {
         "id": p["fixture"]["id"],
@@ -122,11 +138,14 @@ def parsear_partido_proximo(p):
         "logo_local": p["teams"]["home"]["logo"],
         "equipo_visitante": p["teams"]["away"]["name"],
         "logo_visitante": p["teams"]["away"]["logo"],
-        "liga": p["league"]["name"],
+        "liga": liga_nombre,
         "logo_liga": p["league"]["logo"],
         "pais": p["league"]["country"],
         "bandera": p["league"]["flag"],
-        "estado": "proximo"
+        "estado": "proximo",
+        "indicador_nivel": indicador["nivel"],
+        "indicador_label": indicador["label"],
+        "indicador_promedio": indicador["promedio"]
     }
 
 
@@ -137,7 +156,6 @@ def home():
 
 @app.route("/api/partidos")
 def api_partidos():
-    # Partidos en vivo
     vivos_raw = obtener_partidos_en_vivo()
     partidos_vivos = []
     ligas_set = set()
@@ -156,7 +174,6 @@ def api_partidos():
         except Exception:
             continue
     
-    # Próximos partidos (siguientes 2 horas)
     proximos_raw = obtener_proximos_partidos()
     partidos_proximos = []
     
@@ -168,7 +185,6 @@ def api_partidos():
         except Exception:
             continue
     
-    # Ordenar
     orden = {"alerta_activa": 0, "cerca": 1, "vigilando": 2, "fuera": 3}
     partidos_vivos.sort(key=lambda x: (orden.get(x["estado"], 4), -x["minuto"]))
     partidos_proximos.sort(key=lambda x: x["minutos_falta"])
