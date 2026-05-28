@@ -1,7 +1,9 @@
 """
-Dashboard Goleadas Tracker - V3
-- Agrega indicador histórico por liga
-- Detecta condición 2-2 al min 25
+Dashboard Goleadas Tracker - V4
+- Indicador historico por liga
+- Detecta condicion 2-2 al min 25
+- Alerta 4-0 / 0-4 hasta el minuto 34
+- Letrero APUESTA PREMIUM para paises seleccionados
 """
 
 import os
@@ -14,6 +16,14 @@ app = Flask(__name__)
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 URL_API_LIVE = "https://v3.football.api-sports.io/fixtures"
+
+# Paises con etiqueta APUESTA PREMIUM (API-Football los devuelve en ingles)
+PAISES_PREMIUM = {"australia", "austria", "poland", "finland"}
+
+def es_premium(pais):
+    if not pais:
+        return False
+    return pais.strip().lower() in PAISES_PREMIUM
 
 
 def consulta_api(parametros):
@@ -60,12 +70,12 @@ def clasificar_estado(minuto, gol_local, gol_visitante):
     diferencia = abs(gol_local - gol_visitante)
     max_goles = max(gol_local, gol_visitante)
     
-    # Alerta 4-0 al min 25
-    if minuto <= 25:
+    # Alerta 4-0 al min 34
+    if minuto <= 34:
         if max_goles >= 4 and diferencia >= 4:
             return "alerta_activa"
     
-    # Alerta 2-2 al min 25 (NUEVO)
+    # Alerta 2-2 al min 25
     if minuto <= 25:
         if gol_local == 2 and gol_visitante == 2:
             return "alerta_activa"
@@ -82,7 +92,7 @@ def clasificar_estado(minuto, gol_local, gol_visitante):
         if max_goles == 2 and diferencia == 2:
             return "cerca"
     
-    if minuto <= 25:
+    if minuto <= 34:
         return "vigilando"
     return "fuera"
 
@@ -113,7 +123,8 @@ def parsear_partido_vivo(p):
         "estado": estado,
         "indicador_nivel": indicador["nivel"],
         "indicador_label": indicador["label"],
-        "indicador_promedio": indicador["promedio"]
+        "indicador_promedio": indicador["promedio"],
+        "premium": es_premium(p["league"]["country"])
     }
 
 
@@ -145,7 +156,8 @@ def parsear_partido_proximo(p):
         "estado": "proximo",
         "indicador_nivel": indicador["nivel"],
         "indicador_label": indicador["label"],
-        "indicador_promedio": indicador["promedio"]
+        "indicador_promedio": indicador["promedio"],
+        "premium": es_premium(p["league"]["country"])
     }
 
 
