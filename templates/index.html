@@ -352,4 +352,136 @@ function render() {
         html += `<div class="matches">${proximos.map(renderPartidoProximo).join('')}</div>`;
     }
     if (vivos.length === 0 && proximos.length === 0) {
-        html = `
+        html = `<div class="empty">No hay partidos en este momento</div>`;
+    }
+    container.innerHTML = html;
+}
+
+function verificarFrescura() {
+    if (!ultimaActualizacionExitosa) return;
+    const segundosTranscurridos = (Date.now() - ultimaActualizacionExitosa) / 1000;
+    const stale = segundosTranscurridos > 90;
+    document.getElementById('stale-warning').classList.toggle('show', stale);
+    document.getElementById('refresh-dot').classList.toggle('stale', stale);
+}
+
+async function actualizar(manual = false) {
+    if (actualizando) return;
+    actualizando = true;
+    
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (manual) {
+        refreshBtn.classList.add('spinning');
+        refreshBtn.textContent = 'Actualizando...';
+    }
+    
+    try {
+        const res = await fetch('/api/partidos?_=' + Date.now(), { cache: 'no-cache' });
+        const data = await res.json();
+        datosCache = data;
+        document.getElementById('stat-vivo').textContent = data.stats.total_vivo;
+        document.getElementById('stat-alertas').textContent = data.stats.alertas;
+        document.getElementById('stat-cerca').textContent = data.stats.cerca;
+        document.getElementById('stat-proximos').textContent = data.stats.total_proximos;
+        document.getElementById('stat-ligas').textContent = data.stats.ligas;
+        document.getElementById('last-update').textContent = data.stats.actualizado;
+        data.partidos_vivos.forEach(p => { if (p.estado === 'alerta_activa') dispararAlerta(p); });
+        primeraCarga = false;
+        ultimaActualizacionExitosa = Date.now();
+        document.getElementById('stale-warning').classList.remove('show');
+        document.getElementById('refresh-dot').classList.remove('stale');
+        render();
+        if (manual) mostrarToast('Datos actualizados');
+    } catch (e) {
+        console.error('Error:', e);
+        if (manual) mostrarToast('Error al actualizar');
+    } finally {
+        actualizando = false;
+        if (manual) {
+            refreshBtn.classList.remove('spinning');
+            refreshBtn.textContent = 'Actualizar';
+        }
+    }
+}
+
+function inicializarBotones() {
+    const btnSound = document.getElementById('toggle-sound');
+    btnSound.textContent = `Sonido: ${sonidoActivo ? 'ON' : 'OFF'}`;
+    btnSound.classList.toggle('active', sonidoActivo);
+    const btnPush = document.getElementById('toggle-push');
+    if (Notification.permission === 'granted' && pushActivo) {
+        btnPush.textContent = 'Push: ON';
+        btnPush.classList.add('active');
+    } else {
+        pushActivo = false;
+        btnPush.textContent = 'Push: OFF';
+        btnPush.classList.remove('active');
+    }
+}
+
+function iniciarPolling() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(() => actualizar(false), 30000);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        actualizar(false);
+        iniciarPolling();
+    } else {
+        if (intervalId) clearInterval(intervalId);
+    }
+});
+
+window.addEventListener('focus', () => {
+    actualizar(false);
+    iniciarPolling();
+});
+
+let touchStartY = 0;
+let pulling = false;
+let pullDistance = 0;
+
+document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+        touchStartY = e.touches[0].clientY;
+        pulling = true;
+    }
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    pullDistance = e.touches[0].clientY - touchStartY;
+    if (pullDistance > 80) {
+        document.getElementById('pull-indicator').classList.add('show');
+    } else {
+        document.getElementById('pull-indicator').classList.remove('show');
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+    if (pulling && pullDistance > 80) {
+        actualizar(true);
+    }
+    document.getElementById('pull-indicator').classList.remove('show');
+    pulling = false;
+    pullDistance = 0;
+});
+
+setInterval(verificarFrescura, 10000);
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filtroActual = btn.dataset.filter;
+        render();
+    });
+});
+
+inicializarBotones();
+actualizar(true);
+iniciarPolling();
+</script>
+</body>
+</html>
