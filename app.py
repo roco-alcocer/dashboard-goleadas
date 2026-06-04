@@ -4,6 +4,7 @@ Dashboard Goleadas Tracker - V4
 - Detecta condicion 2-2 al min 25
 - Alerta 4-0 / 0-4 hasta el minuto 34
 - Letrero de % ganado historico + N juegos por liga (desde Excel)
+- Letrero APUESTA PREMIUM para paises seleccionados
 """
 
 import os
@@ -17,6 +18,14 @@ app = Flask(__name__)
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 URL_API_LIVE = "https://v3.football.api-sports.io/fixtures"
+
+# Paises con etiqueta APUESTA PREMIUM (API-Football los devuelve en ingles)
+PAISES_PREMIUM = {"australia", "austria", "poland", "finland"}
+
+def es_premium(pais):
+    if not pais:
+        return False
+    return pais.strip().lower() in PAISES_PREMIUM
 
 def consulta_api(parametros):
     if not API_FOOTBALL_KEY:
@@ -117,6 +126,7 @@ def parsear_partido_vivo(p):
         "indicador_nivel": indicador["nivel"],
         "indicador_label": indicador["label"],
         "indicador_promedio": indicador["promedio"],
+        "premium": es_premium(p["league"]["country"]),
         "winrate_pct": wr["pct"] if wr else None,
         "winrate_num": wr["pct_num"] if wr else None,
         "winrate_juegos": wr["juegos"] if wr else None
@@ -153,6 +163,7 @@ def parsear_partido_proximo(p):
         "indicador_nivel": indicador["nivel"],
         "indicador_label": indicador["label"],
         "indicador_promedio": indicador["promedio"],
+        "premium": es_premium(p["league"]["country"]),
         "winrate_pct": wr["pct"] if wr else None,
         "winrate_num": wr["pct_num"] if wr else None,
         "winrate_juegos": wr["juegos"] if wr else None
