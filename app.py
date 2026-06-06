@@ -13,6 +13,7 @@ from flask import Flask, render_template, jsonify
 from datetime import datetime, timedelta, timezone
 from ligas_promedios import obtener_indicador_liga
 from ligas_winrate import winrate_liga
+from ligas_under import under_liga
 
 app = Flask(__name__)
 
@@ -106,6 +107,7 @@ def parsear_partido_vivo(p):
     liga_nombre = p["league"]["name"]
     indicador = obtener_indicador_liga(liga_nombre)
     wr = winrate_liga(p["league"]["country"], liga_nombre)
+    ur = under_liga(p["league"]["country"], liga_nombre)
     
     return {
         "id": p["fixture"]["id"],
@@ -129,7 +131,10 @@ def parsear_partido_vivo(p):
         "premium": es_premium(p["league"]["country"]),
         "winrate_pct": wr["pct"] if wr else None,
         "winrate_num": wr["pct_num"] if wr else None,
-        "winrate_juegos": wr["juegos"] if wr else None
+        "winrate_juegos": wr["juegos"] if wr else None,
+        "under_pct": ur["pct"] if ur else None,
+        "under_num": ur["pct_num"] if ur else None,
+        "under_juegos": ur["juegos"] if ur else None
     }
 
 
@@ -145,6 +150,7 @@ def parsear_partido_proximo(p):
     liga_nombre = p["league"]["name"]
     indicador = obtener_indicador_liga(liga_nombre)
     wr = winrate_liga(p["league"]["country"], liga_nombre)
+    ur = under_liga(p["league"]["country"], liga_nombre)
     
     return {
         "id": p["fixture"]["id"],
@@ -166,7 +172,10 @@ def parsear_partido_proximo(p):
         "premium": es_premium(p["league"]["country"]),
         "winrate_pct": wr["pct"] if wr else None,
         "winrate_num": wr["pct_num"] if wr else None,
-        "winrate_juegos": wr["juegos"] if wr else None
+        "winrate_juegos": wr["juegos"] if wr else None,
+        "under_pct": ur["pct"] if ur else None,
+        "under_num": ur["pct_num"] if ur else None,
+        "under_juegos": ur["juegos"] if ur else None
     }
 
 
