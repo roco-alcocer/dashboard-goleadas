@@ -71,28 +71,19 @@ def clasificar_estado(minuto, gol_local, gol_visitante):
         return "fuera"
     diferencia = abs(gol_local - gol_visitante)
     max_goles = max(gol_local, gol_visitante)
+    min_goles = min(gol_local, gol_visitante)
     
-    # Alerta 4-0 al min 34
-    if minuto <= 34:
-        if max_goles >= 4 and diferencia >= 4:
-            return "alerta_activa"
+    # Alerta: 4-0 o 0-4 antes del minuto 34 (igual que el bot)
+    if minuto <= 34 and max_goles >= 4 and diferencia >= 4:
+        return "alerta_activa"
     
-    # Alerta 2-2 al min 25
-    if minuto <= 25:
-        if gol_local == 2 and gol_visitante == 2:
-            return "alerta_activa"
+    # Alerta: 3-1 o 1-3 antes del minuto 28 (igual que el bot)
+    if minuto <= 28 and max_goles == 3 and min_goles == 1:
+        return "alerta_activa"
     
-    # Cerca de 4-0 (3-0 entre min 16-25)
-    if minuto <= 25:
-        if max_goles == 3 and diferencia == 3 and minuto > 15:
-            return "cerca"
-    
-    # Alerta 3-0 al min 15
-    if minuto <= 15:
-        if max_goles == 3 and diferencia == 3:
-            return "alerta_activa"
-        if max_goles == 2 and diferencia == 2:
-            return "cerca"
+    # Cerca: 3-0 o 0-3 (a un gol del 4-0) antes del minuto 34
+    if minuto <= 34 and max_goles == 3 and diferencia == 3:
+        return "cerca"
     
     if minuto <= 34:
         return "vigilando"
