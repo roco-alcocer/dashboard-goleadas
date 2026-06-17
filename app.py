@@ -1,9 +1,10 @@
 """
-Dashboard Goleadas Tracker - V4
-- Indicador historico por liga
-- Detecta condicion 2-2 al min 25
+Dashboard Goleadas Tracker - V6
+- Indicador unico por liga: Nivel + Promedio de goles (desde Excel)
+- Las alertas SOLO suenan en ligas de nivel "Muy alta"
 - Alerta 4-0 / 0-4 hasta el minuto 34
-- Letrero de % ganado historico + N juegos por liga (desde Excel)
+- Alerta 3-1 / 1-3 hasta el minuto 28
+- Alerta de MEDIO TIEMPO: 4-0/0-4 o 3-1/1-3 al terminar el primer tiempo
 - Letrero APUESTA PREMIUM para paises seleccionados
 """
 
@@ -11,9 +12,7 @@ import os
 import requests
 from flask import Flask, render_template, jsonify
 from datetime import datetime, timedelta, timezone
-from ligas_promedios import obtener_indicador_liga
-from ligas_winrate import winrate_liga
-from ligas_under import under_liga
+from ligas_nivel import nivel_liga
 
 app = Flask(__name__)
 
@@ -66,12 +65,23 @@ def obtener_proximos_partidos():
     return proximos
 
 
-def clasificar_estado(minuto, gol_local, gol_visitante):
-    if minuto is None:
-        return "fuera"
+def clasificar_estado(minuto, gol_local, gol_visitante, estado_corto=None, nivel_clase=None):
+    # Solo alertamos en ligas de nivel "Muy alta"
+    if nivel_clase != "muy_alta":
+        if minuto is None:
+            return "fuera"
+        return "vigilando" if minuto <= 34 else "fuera"
+    
     diferencia = abs(gol_local - gol_visitante)
     max_goles = max(gol_local, gol_visitante)
     min_goles = min(gol_local, gol_visitante)
+    
+    # Alerta MEDIO TIEMPO: 4-0/0-4 o 3-1/1-3 al terminar el primer tiempo (igual que el bot)
+    if estado_corto == "HT" and ((max_goles >= 4 and diferencia >= 4) or (max_goles == 3 and min_goles == 1)):
+        return "alerta_activa"
+    
+    if minuto is None:
+        return "fuera"
     
     # Alerta: 4-0 o 0-4 antes del minuto 34 (igual que el bot)
     if minuto <= 34 and max_goles >= 4 and diferencia >= 4:
@@ -94,17 +104,17 @@ def parsear_partido_vivo(p):
     minuto = p["fixture"]["status"]["elapsed"]
     gol_local = p["goals"]["home"] or 0
     gol_visitante = p["goals"]["away"] or 0
-    estado = clasificar_estado(minuto, gol_local, gol_visitante)
+    estado_corto = p["fixture"]["status"]["short"]
     liga_nombre = p["league"]["name"]
-    indicador = obtener_indicador_liga(liga_nombre)
-    wr = winrate_liga(p["league"]["country"], liga_nombre)
-    ur = under_liga(p["league"]["country"], liga_nombre)
+    niv = nivel_liga(p["league"]["country"], liga_nombre)
+    nivel_clase = niv["clase"] if niv else None
+    estado = clasificar_estado(minuto, gol_local, gol_visitante, estado_corto, nivel_clase)
     
     return {
         "id": p["fixture"]["id"],
         "tipo": "vivo",
         "minuto": minuto if minuto else 0,
-        "estado_partido": p["fixture"]["status"]["short"],
+        "estado_partido": estado_corto,
         "equipo_local": p["teams"]["home"]["name"],
         "logo_local": p["teams"]["home"]["logo"],
         "equipo_visitante": p["teams"]["away"]["name"],
@@ -116,16 +126,11 @@ def parsear_partido_vivo(p):
         "pais": p["league"]["country"],
         "bandera": p["league"]["flag"],
         "estado": estado,
-        "indicador_nivel": indicador["nivel"],
-        "indicador_label": indicador["label"],
-        "indicador_promedio": indicador["promedio"],
         "premium": es_premium(p["league"]["country"]),
-        "winrate_pct": wr["pct"] if wr else None,
-        "winrate_num": wr["pct_num"] if wr else None,
-        "winrate_juegos": wr["juegos"] if wr else None,
-        "under_pct": ur["pct"] if ur else None,
-        "under_num": ur["pct_num"] if ur else None,
-        "under_juegos": ur["juegos"] if ur else None
+        "nivel": niv["nivel"] if niv else None,
+        "nivel_clase": niv["clase"] if niv else None,
+        "nivel_promedio": niv["promedio"] if niv else None,
+        "nivel_n": niv["n"] if niv else None
     }
 
 
@@ -139,9 +144,7 @@ def parsear_partido_proximo(p):
     minutos_falta = int((fecha_utc - ahora).total_seconds() / 60)
     
     liga_nombre = p["league"]["name"]
-    indicador = obtener_indicador_liga(liga_nombre)
-    wr = winrate_liga(p["league"]["country"], liga_nombre)
-    ur = under_liga(p["league"]["country"], liga_nombre)
+    niv = nivel_liga(p["league"]["country"], liga_nombre)
     
     return {
         "id": p["fixture"]["id"],
@@ -157,16 +160,11 @@ def parsear_partido_proximo(p):
         "pais": p["league"]["country"],
         "bandera": p["league"]["flag"],
         "estado": "proximo",
-        "indicador_nivel": indicador["nivel"],
-        "indicador_label": indicador["label"],
-        "indicador_promedio": indicador["promedio"],
         "premium": es_premium(p["league"]["country"]),
-        "winrate_pct": wr["pct"] if wr else None,
-        "winrate_num": wr["pct_num"] if wr else None,
-        "winrate_juegos": wr["juegos"] if wr else None,
-        "under_pct": ur["pct"] if ur else None,
-        "under_num": ur["pct_num"] if ur else None,
-        "under_juegos": ur["juegos"] if ur else None
+        "nivel": niv["nivel"] if niv else None,
+        "nivel_clase": niv["clase"] if niv else None,
+        "nivel_promedio": niv["promedio"] if niv else None,
+        "nivel_n": niv["n"] if niv else None
     }
 
 
