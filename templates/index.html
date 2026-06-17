@@ -68,16 +68,11 @@
         .badges-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
         .indicador-liga { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; cursor: help; }
         .indicador-liga.alta { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid #00ff88; }
+        .indicador-liga.muy_alta { background: rgba(0, 230, 255, 0.15); color: #00e6ff; border: 1px solid #00e6ff; }
         .indicador-liga.media { background: rgba(255, 184, 0, 0.15); color: #ffb800; border: 1px solid #ffb800; }
         .indicador-liga.baja { background: rgba(255, 59, 59, 0.15); color: #ff6b6b; border: 1px solid #ff3b3b; }
         .indicador-liga.nd { background: rgba(107, 114, 128, 0.15); color: #6b7280; border: 1px solid #6b7280; }
-        .winrate-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 9px; font-weight: 900; letter-spacing: 0.3px; }
-        .winrate-badge.solido { background: rgba(56, 132, 255, 0.15); color: #6aa8ff; border: 1px solid #3884ff; }
-        .winrate-badge.debil { background: rgba(107, 114, 128, 0.15); color: #9aa0aa; border: 1px dashed #6b7280; }
         .premium-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 9px; font-weight: 900; letter-spacing: 0.5px; background: linear-gradient(135deg, #ffd700, #ff9500); color: #1a1a2e; box-shadow: 0 0 10px rgba(255, 184, 0, 0.5); }
-        .under-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 9px; font-weight: 900; letter-spacing: 0.3px; }
-        .under-badge.solido { background: rgba(168, 85, 247, 0.18); color: #c79bff; border: 1px solid #a855f7; }
-        .under-badge.debil { background: rgba(107, 114, 128, 0.15); color: #9aa0aa; border: 1px dashed #6b7280; }
         .match-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: center; }
         .team { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s; }
         .team:hover { background: rgba(0, 255, 136, 0.1); transform: scale(1.05); }
@@ -164,7 +159,6 @@
         <button class="filter-btn" data-filter="alerta_activa">Alertas</button>
         <button class="filter-btn" data-filter="cerca">Cerca</button>
         <button class="filter-btn" data-filter="alta">Solo ALTA</button>
-        <button class="filter-btn" data-filter="winrate">% Alto</button>
         <button class="filter-btn" data-filter="premium">Premium</button>
         <div class="refresh-info"><div class="refresh-dot" id="refresh-dot"></div><span>Actualizado: <span id="last-update">--</span></span></div>
     </div>
@@ -308,39 +302,29 @@ function escapeHtml(str) {
 }
 
 function renderBadges(p) {
-    const nivel = p.indicador_nivel || 'nd';
-    const label = p.indicador_label || 'N/D';
-    const promedio = p.indicador_promedio ? p.indicador_promedio.toFixed(2) + ' goles/partido' : 'sin datos';
-    const indicador = `<span class="indicador-liga ${nivel}" title="Promedio historico: ${promedio} | NO predice este partido">${label}</span>`;
-    let winrate = '';
-    if (p.winrate_pct) {
-        const clase = (p.winrate_juegos >= 3) ? 'solido' : 'debil';
-        const palabraJuegos = (p.winrate_juegos === 1) ? 'juego' : 'juegos';
-        const tip = 'OVER - Historico ultimos 365 dias: ' + p.winrate_pct + ' de partidos ganados en ' + p.winrate_juegos + ' ' + palabraJuegos + ' de esta liga. NO predice este partido.';
-        winrate = '<span class="winrate-badge ' + clase + '" title="' + tip + '">OVER ' + p.winrate_pct + ' &middot; ' + p.winrate_juegos + ' ' + palabraJuegos + '</span>';
-    }
-    let under = '';
-    if (p.under_pct) {
-        const claseU = (p.under_juegos >= 3) ? 'solido' : 'debil';
-        const palabraU = (p.under_juegos === 1) ? 'juego' : 'juegos';
-        const tipU = 'UNDER 8.5 - Historico ultimos 365 dias: ' + p.under_pct + ' de partidos ganados en ' + p.under_juegos + ' ' + palabraU + ' de esta liga. NO predice este partido.';
-        under = '<span class="under-badge ' + claseU + '" title="' + tipU + '">UNDER ' + p.under_pct + ' &middot; ' + p.under_juegos + ' ' + palabraU + '</span>';
+    let indicador = '';
+    if (p.nivel) {
+        const clase = p.nivel_clase || 'nd';
+        const prom = (p.nivel_promedio != null) ? p.nivel_promedio.toFixed(2) : '?';
+        const n = (p.nivel_n != null) ? p.nivel_n : 0;
+        const tip = 'Nivel de la liga: ' + p.nivel + '. Promedio historico: ' + prom + ' goles por partido en ' + n + ' partidos. NO predice este partido.';
+        indicador = '<span class="indicador-liga ' + clase + '" title="' + tip + '">' + p.nivel.toUpperCase() + ' &middot; ' + prom + ' goles (' + n + ')</span>';
     }
     const premium = p.premium ? '<span class="premium-badge">APUESTA PREMIUM</span>' : '';
-    return `<div class="badges-row">${indicador}${premium}${winrate}${under}</div>`;
+    return `<div class="badges-row">${indicador}${premium}</div>`;
 }
 
 function renderPartidoVivo(p) {
     const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
     const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
-    return `<div class="match ${p.estado}" data-nivel="${p.indicador_nivel}" data-winrate="${p.winrate_num != null ? p.winrate_num : ''}" data-premium="${p.premium}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div></div>${renderBadges(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div></div>`;
+    return `<div class="match ${p.estado}" data-nivel="${p.nivel_clase || ''}" data-premium="${p.premium}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge ${getMinutoClass(p.estado)}">${p.minuto}'</div></div>${renderBadges(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="score"><span>${p.gol_local}</span><span class="score-separator">-</span><span>${p.gol_visitante}</span></div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-${p.estado}">${getEstadoLabel(p.estado)}</span></div></div>`;
 }
 
 function renderPartidoProximo(p) {
     const tiempoTexto = p.minutos_falta < 60 ? `en ${p.minutos_falta} min` : `en ${Math.floor(p.minutos_falta/60)}h ${p.minutos_falta%60}m`;
     const localEsc = escapeHtml(p.equipo_local).replace(/'/g, "\\'");
     const visitanteEsc = escapeHtml(p.equipo_visitante).replace(/'/g, "\\'");
-    return `<div class="match proximo" data-nivel="${p.indicador_nivel}" data-winrate="${p.winrate_num != null ? p.winrate_num : ''}" data-premium="${p.premium}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge proximo">${p.hora_inicio}</div></div>${renderBadges(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="vs">VS</div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div></div>`;
+    return `<div class="match proximo" data-nivel="${p.nivel_clase || ''}" data-premium="${p.premium}"><div class="match-header"><div class="liga-info">${p.bandera ? `<img src="${p.bandera}" alt="">` : ''}<span class="liga-text">${escapeHtml(p.liga)} - ${escapeHtml(p.pais)}</span></div><div class="minuto-badge proximo">${p.hora_inicio}</div></div>${renderBadges(p)}<div class="match-body"><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_local ? `<img src="${p.logo_local}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_local)}</div><div class="copy-hint">click p/copiar</div></div><div class="vs">VS</div><div class="team" onclick="copiarEquipos('${localEsc}', '${visitanteEsc}')" title="Click para copiar">${p.logo_visitante ? `<img src="${p.logo_visitante}" alt="">` : ''}<div class="team-name">${escapeHtml(p.equipo_visitante)}</div><div class="copy-hint">click p/copiar</div></div></div><div style="text-align: center;"><span class="status-tag status-proximo">Empieza ${tiempoTexto}</span></div></div>`;
 }
 
 function render() {
@@ -356,12 +340,8 @@ function render() {
         proximos = [];
     }
     else if (filtroActual === 'alta') {
-        vivos = vivos.filter(p => p.indicador_nivel === 'alta');
-        proximos = proximos.filter(p => p.indicador_nivel === 'alta');
-    }
-    else if (filtroActual === 'winrate') {
-        vivos = vivos.filter(function(p) { return p.winrate_num != null && p.winrate_juegos >= 3 && p.winrate_num >= 70; });
-        proximos = proximos.filter(function(p) { return p.winrate_num != null && p.winrate_juegos >= 3 && p.winrate_num >= 70; });
+        vivos = vivos.filter(function(p) { return p.nivel_clase === 'alta' || p.nivel_clase === 'muy_alta'; });
+        proximos = proximos.filter(function(p) { return p.nivel_clase === 'alta' || p.nivel_clase === 'muy_alta'; });
     }
     else if (filtroActual === 'premium') {
         vivos = vivos.filter(function(p) { return p.premium; });
