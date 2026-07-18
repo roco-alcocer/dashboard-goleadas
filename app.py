@@ -1,10 +1,7 @@
 """
-Dashboard Goleadas Tracker - V6
+Dashboard Goleadas Tracker - V8
 - Indicador unico por liga: Nivel + Promedio de goles (desde Excel)
-- Las alertas SOLO suenan en ligas de nivel "Muy alta"
-- Alerta 4-0 / 0-4 hasta el minuto 34
-- Alerta 3-1 / 1-3 hasta el minuto 28
-- Alerta de MEDIO TIEMPO: 4-0/0-4 o 3-1/1-3 al terminar el primer tiempo
+- UNICA alerta: 4-0 / 0-4 durante o antes del minuto 34 (todas las ligas)
 - Letrero APUESTA PREMIUM para paises seleccionados
 """
 
@@ -66,29 +63,13 @@ def obtener_proximos_partidos():
 
 
 def clasificar_estado(minuto, gol_local, gol_visitante, estado_corto=None, nivel_clase=None):
-    # Solo alertamos en ligas de nivel "Muy alta"
-    if nivel_clase != "muy_alta":
-        if minuto is None:
-            return "fuera"
-        return "vigilando" if minuto <= 34 else "fuera"
-    
-    diferencia = abs(gol_local - gol_visitante)
-    max_goles = max(gol_local, gol_visitante)
-    min_goles = min(gol_local, gol_visitante)
-    
-    # Alerta MEDIO TIEMPO: 4-0/0-4 o 3-1/1-3 al terminar el primer tiempo (igual que el bot)
-    if estado_corto == "HT" and ((max_goles >= 4 and diferencia >= 4) or (max_goles == 3 and min_goles == 1)):
-        return "alerta_activa"
-    
     if minuto is None:
         return "fuera"
+    diferencia = abs(gol_local - gol_visitante)
+    max_goles = max(gol_local, gol_visitante)
     
-    # Alerta: 4-0 o 0-4 antes del minuto 34 (igual que el bot)
+    # UNICA alerta: 4-0 o 0-4 durante o antes del minuto 34 (todas las ligas)
     if minuto <= 34 and max_goles >= 4 and diferencia >= 4:
-        return "alerta_activa"
-    
-    # Alerta: 3-1 o 1-3 antes del minuto 28 (igual que el bot)
-    if minuto <= 28 and max_goles == 3 and min_goles == 1:
         return "alerta_activa"
     
     # Cerca: 3-0 o 0-3 (a un gol del 4-0) antes del minuto 34
